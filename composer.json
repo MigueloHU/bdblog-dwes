@@ -1,0 +1,11 @@
+{
+  "name": "miguel/bdblog",
+  "description": "Proyecto Blog MVC DWES",
+  "type": "project",
+  "autoload": {
+    "psr-4": {
+      "App\\": "app/"
+    }
+  },
+  "require": {}
+}
