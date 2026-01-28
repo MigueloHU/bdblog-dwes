@@ -3,6 +3,16 @@
 use App\Config\Auth;
 
 $user = Auth::user();
+
+$ordenActual = $_GET['orden'] ?? 'fecha';
+$dirActual   = $_GET['dir'] ?? 'desc';
+
+function nextDir(string $orden, string $ordenActual, string $dirActual): string
+{
+    if ($orden !== $ordenActual) return 'asc';
+    return ($dirActual === 'asc') ? 'desc' : 'asc';
+}
+
 ?>
 <!doctype html>
 <html lang="es">
@@ -36,14 +46,31 @@ $user = Auth::user();
             <table class="table table-striped align-middle">
                 <thead>
                     <tr>
-                        <th>Título</th>
-                        <th>Categoría</th>
-                        <th>Autor</th>
-                        <th>Fecha</th>
+                        <th>
+                            <a href="index.php?controller=entrada&action=listar&orden=titulo&dir=<?= nextDir('titulo', $ordenActual, $dirActual) ?>">
+                                Título
+                            </a>
+                        </th>
+                        <th>
+                            <a href="index.php?controller=entrada&action=listar&orden=categoria&dir=<?= nextDir('categoria', $ordenActual, $dirActual) ?>">
+                                Categoría
+                            </a>
+                        </th>
+                        <th>
+                            <a href="index.php?controller=entrada&action=listar&orden=autor&dir=<?= nextDir('autor', $ordenActual, $dirActual) ?>">
+                                Autor
+                            </a>
+                        </th>
+                        <th>
+                            <a href="index.php?controller=entrada&action=listar&orden=fecha&dir=<?= nextDir('fecha', $ordenActual, $dirActual) ?>">
+                                Fecha
+                            </a>
+                        </th>
                         <th>Imagen</th>
-                        <th style="width: 180px;">Acciones</th>
+                        <th style="width: 220px;">Acciones</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     <?php if (empty($entradas)): ?>
                         <tr>

@@ -22,14 +22,16 @@ class EntradaController
         Auth::requireLogin();
 
         $entradaModel = new Entrada($this->pdo);
-        $user = Auth::user();
 
-        $entradas = $entradaModel->listarAdmin(); // sirve para todos
+        $orden = $_GET['orden'] ?? 'fecha';
+        $dir   = $_GET['dir'] ?? 'desc';
 
+        $entradas = $entradaModel->listarTodasOrdenado($orden, $dir);
 
         $titulo = "Listado de entradas";
         require __DIR__ . '/../Views/entradas/listar.php';
     }
+
 
     public function crear(): void
     {

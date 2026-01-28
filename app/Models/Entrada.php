@@ -13,6 +13,32 @@ class Entrada
         $this->pdo = $pdo;
     }
 
+    public function listarTodasOrdenado(string $orden = 'fecha', string $dir = 'desc'): array
+    {
+        $ordenesPermitidos = [
+            'fecha' => 'e.fecha',
+            'titulo' => 'e.titulo',
+            'categoria' => 'c.nombre',
+            'autor' => 'u.nick'
+        ];
+
+        $dir = strtolower($dir);
+        if ($dir !== 'asc' && $dir !== 'desc') {
+            $dir = 'desc';
+        }
+
+        $col = $ordenesPermitidos[$orden] ?? 'e.fecha';
+
+        $sql = "SELECT e.*, c.nombre AS categoria_nombre, u.nick AS autor_nick
+            FROM entradas e
+            INNER JOIN categorias c ON c.id = e.categoria_id
+            INNER JOIN usuarios u ON u.id = e.usuario_id
+            ORDER BY $col $dir";
+
+        return $this->pdo->query($sql)->fetchAll();
+    }
+
+
     public function listarAdmin(): array
     {
         $sql = "SELECT e.*, c.nombre AS categoria_nombre, u.nick AS autor_nick
