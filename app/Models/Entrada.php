@@ -125,4 +125,35 @@ class Entrada
         $stmt = $this->pdo->prepare("DELETE FROM entradas WHERE id = :id");
         return $stmt->execute([':id' => $id]);
     }
+
+    public function buscar(string $texto, string $orden = 'fecha', string $dir = 'desc'): array
+    {
+        $ordenesPermitidos = [
+            'fecha' => 'e.fecha',
+            'titulo' => 'e.titulo',
+            'categoria' => 'c.nombre',
+            'autor' => 'u.nick'
+        ];
+
+        $dir = strtolower($dir);
+        if ($dir !== 'asc' && $dir !== 'desc') {
+            $dir = 'desc';
+        }
+
+        $col = $ordenesPermitidos[$orden] ?? 'e.fecha';
+
+        $sql = "SELECT e.*, c.nombre AS categoria_nombre, u.nick AS autor_nick
+            FROM entradas e
+            INNER JOIN categorias c ON c.id = e.categoria_id
+            INNER JOIN usuarios u ON u.id = e.usuario_id
+            WHERE e.titulo LIKE :q
+               OR e.descripcion LIKE :q
+               OR c.nombre LIKE :q
+               OR u.nick LIKE :q
+            ORDER BY $col $dir";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':q' => '%' . $texto . '%']);
+        return $stmt->fetchAll();
+    }
 }

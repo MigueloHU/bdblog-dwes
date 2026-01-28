@@ -25,8 +25,14 @@ class EntradaController
 
         $orden = $_GET['orden'] ?? 'fecha';
         $dir   = $_GET['dir'] ?? 'desc';
+        $q     = trim($_GET['q'] ?? '');
 
-        $entradas = $entradaModel->listarTodasOrdenado($orden, $dir);
+        if ($q !== '') {
+            $entradas = $entradaModel->buscar($q, $orden, $dir);
+        } else {
+            $entradas = $entradaModel->listarTodasOrdenado($orden, $dir);
+        }
+
 
         $titulo = "Listado de entradas";
         require __DIR__ . '/../Views/entradas/listar.php';

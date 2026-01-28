@@ -6,6 +6,8 @@ $user = Auth::user();
 
 $ordenActual = $_GET['orden'] ?? 'fecha';
 $dirActual   = $_GET['dir'] ?? 'desc';
+$qActual = trim($_GET['q'] ?? '');
+
 
 function nextDir(string $orden, string $ordenActual, string $dirActual): string
 {
@@ -43,26 +45,45 @@ function nextDir(string $orden, string $ordenActual, string $dirActual): string
         </div>
 
         <div class="table-responsive text-start">
+            <!-- BUSCADOR -->
+            <form class="row g-2 align-items-center mb-3" method="get" action="index.php">
+                <input type="hidden" name="controller" value="entrada">
+                <input type="hidden" name="action" value="listar">
+                <input type="hidden" name="orden" value="<?= htmlspecialchars($ordenActual) ?>">
+                <input type="hidden" name="dir" value="<?= htmlspecialchars($dirActual) ?>">
+
+                <div class="col-12 col-md-8">
+                    <input type="text" class="form-control" name="q"
+                        placeholder="Buscar por título, descripción, categoría o autor..."
+                        value="<?= htmlspecialchars($qActual) ?>">
+                </div>
+
+                <div class="col-12 col-md-4 d-grid gap-2 d-md-flex">
+                    <button class="btn btn-success" type="submit">Buscar</button>
+                    <a class="btn btn-outline-secondary" href="index.php?controller=entrada&action=listar">Limpiar</a>
+                </div>
+            </form>
+
             <table class="table table-striped align-middle">
                 <thead>
                     <tr>
                         <th>
-                            <a href="index.php?controller=entrada&action=listar&orden=titulo&dir=<?= nextDir('titulo', $ordenActual, $dirActual) ?>">
+                            <a href="index.php?controller=entrada&action=listar&orden=titulo&dir=<?= nextDir('titulo', $ordenActual, $dirActual) ?>&q=<?= urlencode($qActual) ?>">
                                 Título
                             </a>
                         </th>
                         <th>
-                            <a href="index.php?controller=entrada&action=listar&orden=categoria&dir=<?= nextDir('categoria', $ordenActual, $dirActual) ?>">
+                            <a href="index.php?controller=entrada&action=listar&orden=categoria&dir=<?= nextDir('categoria', $ordenActual, $dirActual) ?>&q=<?= urlencode($qActual) ?>">
                                 Categoría
                             </a>
                         </th>
                         <th>
-                            <a href="index.php?controller=entrada&action=listar&orden=autor&dir=<?= nextDir('autor', $ordenActual, $dirActual) ?>">
+                            <a href="index.php?controller=entrada&action=listar&orden=autor&dir=<?= nextDir('autor', $ordenActual, $dirActual) ?>&q=<?= urlencode($qActual) ?>">
                                 Autor
                             </a>
                         </th>
                         <th>
-                            <a href="index.php?controller=entrada&action=listar&orden=fecha&dir=<?= nextDir('fecha', $ordenActual, $dirActual) ?>">
+                            <a href="index.php?controller=entrada&action=listar&orden=fecha&dir=<?= nextDir('fecha', $ordenActual, $dirActual) ?>&q=<?= urlencode($qActual) ?>">
                                 Fecha
                             </a>
                         </th>
