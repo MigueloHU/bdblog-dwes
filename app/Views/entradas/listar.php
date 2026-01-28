@@ -131,9 +131,11 @@ function h(string $s): string
 
                                     <?php if ($puedeEditar): ?>
                                         <a class="btn btn-sm btn-warning"
-                                            href="index.php?controller=entrada&action=editar&id=<?= (int)$e['id'] ?>">
+                                            href="index.php?controller=entrada&action=editar&id=<?= (int)$e['id'] ?>"
+                                            onclick="return confirm('¿Seguro que deseas editar esta entrada?');">
                                             Editar
                                         </a>
+
                                         <a class="btn btn-sm btn-danger"
                                             href="index.php?controller=entrada&action=eliminar&id=<?= (int)$e['id'] ?>"
                                             onclick="return confirm('¿Seguro que deseas eliminar esta entrada?');">
