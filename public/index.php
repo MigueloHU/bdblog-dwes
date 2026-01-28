@@ -5,10 +5,9 @@ use App\Config\Database;
 
 $pdo = (new Database())->getConnection();
 
-/**
- * Router SIMPLE por GET (estilo del PDF MVC):
- * index.php?controller=entrada&action=listar
- */
+
+ // index.php?controller=entrada&action=listar
+ 
 $controller = filter_input(INPUT_GET, 'controller') ?? 'entrada';
 $action     = filter_input(INPUT_GET, 'action') ?? 'listar';
 
