@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use PDO;
@@ -42,6 +43,24 @@ class Entrada
         $row = $stmt->fetch();
         return $row ?: null;
     }
+
+    public function findDetalle(int $id): ?array
+    {
+        $sql = "SELECT e.*, 
+                   c.nombre AS categoria_nombre,
+                   u.nick AS autor_nick
+            FROM entradas e
+            INNER JOIN categorias c ON c.id = e.categoria_id
+            INNER JOIN usuarios u ON u.id = e.usuario_id
+            WHERE e.id = :id
+            LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':id' => $id]);
+
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
 
     public function crear(array $data): bool
     {

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controllers;
 
 use PDO;
@@ -23,11 +24,8 @@ class EntradaController
         $entradaModel = new Entrada($this->pdo);
         $user = Auth::user();
 
-        if (Auth::isAdmin()) {
-            $entradas = $entradaModel->listarAdmin();
-        } else {
-            $entradas = $entradaModel->listarPorUsuario((int)$user['id']);
-        }
+        $entradas = $entradaModel->listarAdmin(); // sirve para todos
+
 
         $titulo = "Listado de entradas";
         require __DIR__ . '/../Views/entradas/listar.php';
@@ -255,5 +253,25 @@ class EntradaController
         }
 
         return $nombre;
+    }
+
+    public function detalle(): void
+    {
+        Auth::requireLogin();
+
+        $id = (int)($_GET['id'] ?? 0);
+        if ($id <= 0) {
+            die("ID inválido.");
+        }
+
+        $entradaModel = new Entrada($this->pdo);
+        $entrada = $entradaModel->findDetalle($id);
+
+        if (!$entrada) {
+            die("Entrada no encontrada.");
+        }
+
+        $titulo = "Detalle de la entrada";
+        require __DIR__ . '/../Views/entradas/detalle.php';
     }
 }
