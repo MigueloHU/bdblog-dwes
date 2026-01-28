@@ -6,8 +6,7 @@ $user = Auth::user();
 
 $ordenActual = $_GET['orden'] ?? 'fecha';
 $dirActual   = $_GET['dir'] ?? 'desc';
-$qActual = trim($_GET['q'] ?? '');
-
+$qActual     = trim($_GET['q'] ?? '');
 
 function nextDir(string $orden, string $ordenActual, string $dirActual): string
 {
@@ -15,6 +14,10 @@ function nextDir(string $orden, string $ordenActual, string $dirActual): string
     return ($dirActual === 'asc') ? 'desc' : 'asc';
 }
 
+function h(string $s): string
+{
+    return htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
+}
 ?>
 <!doctype html>
 <html lang="es">
@@ -23,16 +26,16 @@ function nextDir(string $orden, string $ordenActual, string $dirActual): string
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <title><?= htmlspecialchars($titulo) ?></title>
+    <title><?= h($titulo) ?></title>
 </head>
 
 <body>
     <div class="container py-4 text-center">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div class="text-start">
-                <h1 class="h3 mb-0"><?= htmlspecialchars($titulo) ?></h1>
+                <h1 class="h3 mb-0"><?= h($titulo) ?></h1>
                 <div class="text-muted small">
-                    Sesión: <?= htmlspecialchars($user['nick']) ?> (<?= htmlspecialchars($user['perfil']) ?>)
+                    Sesión: <?= h($user['nick']) ?> (<?= h($user['perfil']) ?>)
                 </div>
             </div>
             <div>
@@ -43,27 +46,33 @@ function nextDir(string $orden, string $ordenActual, string $dirActual): string
         <div class="mb-3 text-start">
             <a class="btn btn-primary" href="index.php?controller=entrada&action=crear">+ Nueva entrada</a>
         </div>
+        <?php if (!empty($_GET['ok'])): ?>
+            <div class="alert alert-success text-start">
+                Entrada creada correctamente ✅
+            </div>
+        <?php endif; ?>
+
+
+        <!-- BUSCADOR (importante: form bien cerrado) -->
+        <form class="row g-2 align-items-center mb-3 text-start" method="get" action="index.php">
+            <input type="hidden" name="controller" value="entrada">
+            <input type="hidden" name="action" value="listar">
+            <input type="hidden" name="orden" value="<?= h($ordenActual) ?>">
+            <input type="hidden" name="dir" value="<?= h($dirActual) ?>">
+
+            <div class="col-12 col-md-8">
+                <input type="text" class="form-control" name="q"
+                    placeholder="Buscar por título, descripción, categoría o autor..."
+                    value="<?= h($qActual) ?>">
+            </div>
+
+            <div class="col-12 col-md-4 d-grid gap-2 d-md-flex">
+                <button class="btn btn-success" type="submit">Buscar</button>
+                <a class="btn btn-outline-secondary" href="index.php?controller=entrada&action=listar">Limpiar</a>
+            </div>
+        </form>
 
         <div class="table-responsive text-start">
-            <!-- BUSCADOR -->
-            <form class="row g-2 align-items-center mb-3" method="get" action="index.php">
-                <input type="hidden" name="controller" value="entrada">
-                <input type="hidden" name="action" value="listar">
-                <input type="hidden" name="orden" value="<?= htmlspecialchars($ordenActual) ?>">
-                <input type="hidden" name="dir" value="<?= htmlspecialchars($dirActual) ?>">
-
-                <div class="col-12 col-md-8">
-                    <input type="text" class="form-control" name="q"
-                        placeholder="Buscar por título, descripción, categoría o autor..."
-                        value="<?= htmlspecialchars($qActual) ?>">
-                </div>
-
-                <div class="col-12 col-md-4 d-grid gap-2 d-md-flex">
-                    <button class="btn btn-success" type="submit">Buscar</button>
-                    <a class="btn btn-outline-secondary" href="index.php?controller=entrada&action=listar">Limpiar</a>
-                </div>
-            </form>
-
             <table class="table table-striped align-middle">
                 <thead>
                     <tr>
@@ -88,10 +97,9 @@ function nextDir(string $orden, string $ordenActual, string $dirActual): string
                             </a>
                         </th>
                         <th>Imagen</th>
-                        <th style="width: 220px;">Acciones</th>
+                        <th style="width: 260px;">Acciones</th>
                     </tr>
                 </thead>
-
                 <tbody>
                     <?php if (empty($entradas)): ?>
                         <tr>
@@ -100,13 +108,13 @@ function nextDir(string $orden, string $ordenActual, string $dirActual): string
                     <?php else: ?>
                         <?php foreach ($entradas as $e): ?>
                             <tr>
-                                <td><?= htmlspecialchars($e['titulo']) ?></td>
-                                <td><?= htmlspecialchars($e['categoria_nombre']) ?></td>
-                                <td><?= htmlspecialchars($e['autor_nick']) ?></td>
-                                <td><?= htmlspecialchars($e['fecha']) ?></td>
+                                <td><?= h($e['titulo']) ?></td>
+                                <td><?= h($e['categoria_nombre']) ?></td>
+                                <td><?= h($e['autor_nick']) ?></td>
+                                <td><?= h($e['fecha']) ?></td>
                                 <td>
                                     <?php if (!empty($e['imagen'])): ?>
-                                        <img src="uploads/<?= htmlspecialchars($e['imagen']) ?>" style="width:70px; height:auto;">
+                                        <img src="uploads/<?= h($e['imagen']) ?>" style="width:70px; height:auto;">
                                     <?php else: ?>
                                         <span class="text-muted">—</span>
                                     <?php endif; ?>
@@ -126,7 +134,6 @@ function nextDir(string $orden, string $ordenActual, string $dirActual): string
                                             href="index.php?controller=entrada&action=editar&id=<?= (int)$e['id'] ?>">
                                             Editar
                                         </a>
-
                                         <a class="btn btn-sm btn-danger"
                                             href="index.php?controller=entrada&action=eliminar&id=<?= (int)$e['id'] ?>"
                                             onclick="return confirm('¿Seguro que deseas eliminar esta entrada?');">
@@ -134,7 +141,6 @@ function nextDir(string $orden, string $ordenActual, string $dirActual): string
                                         </a>
                                     <?php endif; ?>
                                 </td>
-
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>

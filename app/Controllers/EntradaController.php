@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Controllers;
 
 use PDO;
@@ -33,11 +32,9 @@ class EntradaController
             $entradas = $entradaModel->listarTodasOrdenado($orden, $dir);
         }
 
-
         $titulo = "Listado de entradas";
         require __DIR__ . '/../Views/entradas/listar.php';
     }
-
 
     public function crear(): void
     {
@@ -65,14 +62,18 @@ class EntradaController
         Auth::requireLogin();
 
         $user = Auth::user();
+
         $categoriaId = (int)($_POST['categoria_id'] ?? 0);
-        $tituloPost = trim($_POST['titulo'] ?? '');
-        $descripcion = trim($_POST['descripcion'] ?? '');
+        $tituloPost  = trim($_POST['titulo'] ?? '');
+
+        // CKEditor: llega HTML, validamos en texto plano (sin tags)
+        $descripcionHtml  = $_POST['descripcion'] ?? '';
+        $descripcionTexto = trim(strip_tags($descripcionHtml));
 
         $errores = [];
         if ($categoriaId <= 0) $errores[] = "Debes seleccionar una categoría.";
         if ($tituloPost === '') $errores[] = "El título es obligatorio.";
-        if ($descripcion === '') $errores[] = "La descripción es obligatoria.";
+        if ($descripcionTexto === '') $errores[] = "La descripción es obligatoria.";
 
         $nombreImagen = null;
         if (!empty($_FILES['imagen']['name'])) {
@@ -90,20 +91,28 @@ class EntradaController
                 'categoria_id' => $categoriaId,
                 'titulo' => $tituloPost,
                 'imagen' => $nombreImagen,
-                'descripcion' => $descripcion
+                'descripcion' => $descripcionHtml
             ];
+
             require __DIR__ . '/../Views/entradas/form.php';
             return;
         }
 
         $entradaModel = new Entrada($this->pdo);
-        $entradaModel->crear([
+
+        $ok = $entradaModel->crear([
             'usuario_id' => (int)$user['id'],
             'categoria_id' => $categoriaId,
             'titulo' => $tituloPost,
             'imagen' => $nombreImagen,
-            'descripcion' => $descripcion
+            'descripcion' => $descripcionHtml
         ]);
+
+        if (!$ok) {
+            // Si tienes getLastError() en el modelo, lo mostramos
+            $msg = method_exists($entradaModel, 'getLastError') ? $entradaModel->getLastError() : 'Error desconocido';
+            die("Error al insertar en BD: " . $msg);
+        }
 
         header('Location: index.php?controller=entrada&action=listar');
         exit;
@@ -120,7 +129,7 @@ class EntradaController
         $entrada = $entradaModel->find($id);
         if (!$entrada) die("Entrada no encontrada.");
 
-        // Restricción: user solo sus entradas
+        // Permisos: solo autor o admin
         $user = Auth::user();
         if (!Auth::isAdmin() && (int)$entrada['usuario_id'] !== (int)$user['id']) {
             die("No tienes permiso para editar esta entrada.");
@@ -147,22 +156,25 @@ class EntradaController
         $entradaActual = $entradaModel->find($id);
         if (!$entradaActual) die("Entrada no encontrada.");
 
-        // Restricción: user solo sus entradas
+        // Permisos: solo autor o admin
         $user = Auth::user();
         if (!Auth::isAdmin() && (int)$entradaActual['usuario_id'] !== (int)$user['id']) {
             die("No tienes permiso para modificar esta entrada.");
         }
 
         $categoriaId = (int)($_POST['categoria_id'] ?? 0);
-        $tituloPost = trim($_POST['titulo'] ?? '');
-        $descripcion = trim($_POST['descripcion'] ?? '');
+        $tituloPost  = trim($_POST['titulo'] ?? '');
+
+        // CKEditor: validamos texto plano
+        $descripcionHtml  = $_POST['descripcion'] ?? '';
+        $descripcionTexto = trim(strip_tags($descripcionHtml));
 
         $errores = [];
         if ($categoriaId <= 0) $errores[] = "Debes seleccionar una categoría.";
         if ($tituloPost === '') $errores[] = "El título es obligatorio.";
-        if ($descripcion === '') $errores[] = "La descripción es obligatoria.";
+        if ($descripcionTexto === '') $errores[] = "La descripción es obligatoria.";
 
-        $nombreImagen = $entradaActual['imagen']; // por defecto mantenemos
+        $nombreImagen = $entradaActual['imagen']; // mantenemos si no sube nueva
         if (!empty($_FILES['imagen']['name'])) {
             $nuevo = $this->subirImagen($_FILES['imagen'], $errores);
             if ($nuevo !== null) {
@@ -181,19 +193,24 @@ class EntradaController
                 'categoria_id' => $categoriaId,
                 'titulo' => $tituloPost,
                 'imagen' => $nombreImagen,
-                'descripcion' => $descripcion
+                'descripcion' => $descripcionHtml
             ];
 
             require __DIR__ . '/../Views/entradas/form.php';
             return;
         }
 
-        $entradaModel->actualizar($id, [
+        $ok = $entradaModel->actualizar($id, [
             'categoria_id' => $categoriaId,
             'titulo' => $tituloPost,
             'imagen' => $nombreImagen,
-            'descripcion' => $descripcion
+            'descripcion' => $descripcionHtml
         ]);
+
+        if (!$ok) {
+            $msg = method_exists($entradaModel, 'getLastError') ? $entradaModel->getLastError() : 'Error desconocido';
+            die("Error al actualizar en BD: " . $msg);
+        }
 
         header('Location: index.php?controller=entrada&action=listar');
         exit;
@@ -210,13 +227,13 @@ class EntradaController
         $entrada = $entradaModel->find($id);
         if (!$entrada) die("Entrada no encontrada.");
 
-        // Restricción: user solo sus entradas
+        // Permisos: solo autor o admin
         $user = Auth::user();
         if (!Auth::isAdmin() && (int)$entrada['usuario_id'] !== (int)$user['id']) {
             die("No tienes permiso para eliminar esta entrada.");
         }
 
-        // (Opcional) borrar fichero de imagen si existe
+        // borrar fichero si existe
         if (!empty($entrada['imagen'])) {
             $ruta = __DIR__ . '/../../public/uploads/' . $entrada['imagen'];
             if (is_file($ruta)) {
@@ -224,10 +241,32 @@ class EntradaController
             }
         }
 
-        $entradaModel->eliminar($id);
+        $ok = $entradaModel->eliminar($id);
+        if (!$ok) {
+            $msg = method_exists($entradaModel, 'getLastError') ? $entradaModel->getLastError() : 'Error desconocido';
+            die("Error al eliminar en BD: " . $msg);
+        }
 
         header('Location: index.php?controller=entrada&action=listar');
         exit;
+    }
+
+    public function detalle(): void
+    {
+        Auth::requireLogin();
+
+        $id = (int)($_GET['id'] ?? 0);
+        if ($id <= 0) die("ID inválido.");
+
+        $entradaModel = new Entrada($this->pdo);
+        $entrada = $entradaModel->findDetalle($id);
+
+        if (!$entrada) {
+            die("Entrada no encontrada.");
+        }
+
+        $titulo = "Detalle de la entrada";
+        require __DIR__ . '/../Views/entradas/detalle.php';
     }
 
     private function subirImagen(array $file, array &$errores): ?string
@@ -261,25 +300,5 @@ class EntradaController
         }
 
         return $nombre;
-    }
-
-    public function detalle(): void
-    {
-        Auth::requireLogin();
-
-        $id = (int)($_GET['id'] ?? 0);
-        if ($id <= 0) {
-            die("ID inválido.");
-        }
-
-        $entradaModel = new Entrada($this->pdo);
-        $entrada = $entradaModel->findDetalle($id);
-
-        if (!$entrada) {
-            die("Entrada no encontrada.");
-        }
-
-        $titulo = "Detalle de la entrada";
-        require __DIR__ . '/../Views/entradas/detalle.php';
     }
 }
