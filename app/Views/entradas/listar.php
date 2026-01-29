@@ -68,6 +68,12 @@ function linkOrden(string $campo, string $ordenActual, string $dirActual, string
 
         <div class="mb-3 text-start">
             <a class="btn btn-primary" href="index.php?controller=entrada&action=crear">+ Nueva entrada</a>
+            <a class="btn btn-outline-danger ms-2"
+                target="_blank"
+                href="index.php?controller=pdf&action=entradas&orden=<?= urlencode($ordenActual) ?>&dir=<?= urlencode($dirActual) ?>&q=<?= urlencode($qActual) ?>">
+                Imprimir PDF
+            </a>
+
         </div>
 
         <!-- BUSCADOR -->
