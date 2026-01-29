@@ -8,39 +8,43 @@
     <title><?= htmlspecialchars($titulo) ?></title>
 </head>
 
-<body>
-    <div class="container py-4">
-        <div class="mb-3">
-            <a class="btn btn-outline-secondary"
-                href="index.php?controller=entrada&action=listar">
-                ← Volver al listado
-            </a>
-        </div>
-
-        <article class="card shadow-sm">
-            <?php if (!empty($entrada['imagen'])): ?>
-                <img src="uploads/<?= htmlspecialchars($entrada['imagen']) ?>"
-                    class="card-img-top"
-                    alt="Imagen de la entrada">
-            <?php endif; ?>
-
-            <div class="card-body">
-                <h1 class="card-title h3 mb-3">
-                    <?= htmlspecialchars($entrada['titulo']) ?>
-                </h1>
-
-                <div class="mb-3 text-muted small">
-                    <strong>Categoría:</strong> <?= htmlspecialchars($entrada['categoria_nombre']) ?> |
-                    <strong>Autor:</strong> <?= htmlspecialchars($entrada['autor_nick']) ?> |
-                    <strong>Fecha:</strong> <?= htmlspecialchars($entrada['fecha']) ?>
-                </div>
-
-                <div class="card-text">
-                    <?= $entrada['descripcion'] ?>
-                </div>
+<body class="d-flex flex-column min-vh-100">
+    <?php require __DIR__ . '/../layout/header.php'; ?>
+    <main class="flex-grow-1">
+        <div class="container py-4">
+            <div class="mb-3">
+                <a class="btn btn-outline-secondary"
+                    href="index.php?controller=entrada&action=listar">
+                    ← Volver al listado
+                </a>
             </div>
-        </article>
-    </div>
+
+            <article class="card shadow-sm">
+                <?php if (!empty($entrada['imagen'])): ?>
+                    <img src="uploads/<?= htmlspecialchars($entrada['imagen']) ?>"
+                        class="card-img-top"
+                        alt="Imagen de la entrada">
+                <?php endif; ?>
+
+                <div class="card-body">
+                    <h1 class="card-title h3 mb-3">
+                        <?= htmlspecialchars($entrada['titulo']) ?>
+                    </h1>
+
+                    <div class="mb-3 text-muted small">
+                        <strong>Categoría:</strong> <?= htmlspecialchars($entrada['categoria_nombre']) ?> |
+                        <strong>Autor:</strong> <?= htmlspecialchars($entrada['autor_nick']) ?> |
+                        <strong>Fecha:</strong> <?= htmlspecialchars($entrada['fecha']) ?>
+                    </div>
+
+                    <div class="card-text">
+                        <?= $entrada['descripcion'] ?>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </main>
+    <?php require __DIR__ . '/../layout/footer.php'; ?>
 </body>
 
 </html>
