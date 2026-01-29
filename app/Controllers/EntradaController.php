@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controllers;
 
 use PDO;
@@ -22,19 +23,44 @@ class EntradaController
 
         $entradaModel = new Entrada($this->pdo);
 
+        // Orden + búsqueda
         $orden = $_GET['orden'] ?? 'fecha';
         $dir   = $_GET['dir'] ?? 'desc';
         $q     = trim($_GET['q'] ?? '');
 
-        if ($q !== '') {
-            $entradas = $entradaModel->buscar($q, $orden, $dir);
-        } else {
-            $entradas = $entradaModel->listarTodasOrdenado($orden, $dir);
+        // Paginación
+        $page = (int)($_GET['page'] ?? 1);
+        if ($page < 1) $page = 1;
+
+        $perPage = (int)($_GET['perPage'] ?? 5); // RegXPág por defecto
+        $permitidos = [5, 10, 20];
+        if (!in_array($perPage, $permitidos, true)) {
+            $perPage = 5;
         }
+
+        $totalRegistros = $entradaModel->contar($q);
+        $totalPaginas = (int)ceil($totalRegistros / $perPage);
+        if ($totalPaginas < 1) $totalPaginas = 1;
+
+        // Clamp page dentro de rango
+        if ($page > $totalPaginas) $page = $totalPaginas;
+
+        $offset = ($page - 1) * $perPage;
+
+        $entradas = $entradaModel->listarPaginado($offset, $perPage, $orden, $dir, $q);
+
+        // Variables para la vista
+        $paginacion = [
+            'page' => $page,
+            'perPage' => $perPage,
+            'totalRegistros' => $totalRegistros,
+            'totalPaginas' => $totalPaginas
+        ];
 
         $titulo = "Listado de entradas";
         require __DIR__ . '/../Views/entradas/listar.php';
     }
+
 
     public function crear(): void
     {

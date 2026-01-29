@@ -7,6 +7,11 @@ $ordenActual = $_GET['orden'] ?? 'fecha';
 $dirActual   = $_GET['dir'] ?? 'desc';
 $qActual     = trim($_GET['q'] ?? '');
 
+$pageActual       = $paginacion['page'] ?? 1;
+$perPageActual    = $paginacion['perPage'] ?? 5;
+$totalPaginas     = $paginacion['totalPaginas'] ?? 1;
+$totalRegistros   = $paginacion['totalRegistros'] ?? 0;
+
 function nextDir(string $orden, string $ordenActual, string $dirActual): string {
     if ($orden !== $ordenActual) return 'asc';
     return ($dirActual === 'asc') ? 'desc' : 'asc';
@@ -14,6 +19,22 @@ function nextDir(string $orden, string $ordenActual, string $dirActual): string 
 
 function h(string $s): string {
     return htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
+}
+
+$baseParams = "controller=entrada&action=listar"
+            . "&orden=" . urlencode($ordenActual)
+            . "&dir=" . urlencode($dirActual)
+            . "&q=" . urlencode($qActual)
+            . "&perPage=" . (int)$perPageActual;
+
+function linkOrden(string $campo, string $ordenActual, string $dirActual, string $qActual, int $pageActual, int $perPageActual): string {
+    $dir = nextDir($campo, $ordenActual, $dirActual);
+    return "index.php?controller=entrada&action=listar"
+        . "&orden=" . urlencode($campo)
+        . "&dir=" . urlencode($dir)
+        . "&q=" . urlencode($qActual)
+        . "&page=" . (int)$pageActual
+        . "&perPage=" . (int)$perPageActual;
 }
 ?>
 <!doctype html>
@@ -48,6 +69,8 @@ function h(string $s): string {
       <input type="hidden" name="action" value="listar">
       <input type="hidden" name="orden" value="<?= h($ordenActual) ?>">
       <input type="hidden" name="dir" value="<?= h($dirActual) ?>">
+      <input type="hidden" name="perPage" value="<?= (int)$perPageActual ?>">
+      <input type="hidden" name="page" value="1">
 
       <div class="col-12 col-md-8">
         <input type="text" class="form-control" name="q"
@@ -57,38 +80,59 @@ function h(string $s): string {
 
       <div class="col-12 col-md-4 d-grid gap-2 d-md-flex">
         <button class="btn btn-success" type="submit">Buscar</button>
-        <a class="btn btn-outline-secondary" href="index.php?controller=entrada&action=listar">Limpiar</a>
+        <a class="btn btn-outline-secondary"
+           href="index.php?controller=entrada&action=listar&orden=<?= urlencode($ordenActual) ?>&dir=<?= urlencode($dirActual) ?>&perPage=<?= (int)$perPageActual ?>&page=1">
+          Limpiar
+        </a>
       </div>
     </form>
+
+    <!-- INFO + REGXPÁG -->
+    <div class="d-flex justify-content-between align-items-center mb-2 text-start">
+      <div class="text-muted small">
+        Total: <strong><?= (int)$totalRegistros ?></strong> registros |
+        Páginas: <strong><?= (int)$totalPaginas ?></strong> |
+        Página actual: <strong><?= (int)$pageActual ?></strong>
+      </div>
+
+      <form method="get" action="index.php" class="d-flex align-items-center gap-2">
+        <input type="hidden" name="controller" value="entrada">
+        <input type="hidden" name="action" value="listar">
+        <input type="hidden" name="orden" value="<?= h($ordenActual) ?>">
+        <input type="hidden" name="dir" value="<?= h($dirActual) ?>">
+        <input type="hidden" name="q" value="<?= h($qActual) ?>">
+        <input type="hidden" name="page" value="1">
+
+        <label class="small text-muted">Registros/pág:</label>
+        <select name="perPage" class="form-select form-select-sm" style="width:90px" onchange="this.form.submit()">
+          <?php foreach ([5,10,20] as $n): ?>
+            <option value="<?= $n ?>" <?= ((int)$perPageActual === (int)$n) ? 'selected' : '' ?>><?= $n ?></option>
+          <?php endforeach; ?>
+        </select>
+      </form>
+    </div>
 
     <div class="table-responsive text-start">
       <table class="table table-striped align-middle">
         <thead>
           <tr>
             <th>
-              <a href="index.php?controller=entrada&action=listar&orden=titulo&dir=<?= nextDir('titulo',$ordenActual,$dirActual) ?>&q=<?= urlencode($qActual) ?>">
-                Título
-              </a>
+              <a href="<?= h(linkOrden('titulo', $ordenActual, $dirActual, $qActual, $pageActual, $perPageActual)) ?>">Título</a>
             </th>
             <th>
-              <a href="index.php?controller=entrada&action=listar&orden=categoria&dir=<?= nextDir('categoria',$ordenActual,$dirActual) ?>&q=<?= urlencode($qActual) ?>">
-                Categoría
-              </a>
+              <a href="<?= h(linkOrden('categoria', $ordenActual, $dirActual, $qActual, $pageActual, $perPageActual)) ?>">Categoría</a>
             </th>
             <th>
-              <a href="index.php?controller=entrada&action=listar&orden=autor&dir=<?= nextDir('autor',$ordenActual,$dirActual) ?>&q=<?= urlencode($qActual) ?>">
-                Autor
-              </a>
+              <a href="<?= h(linkOrden('autor', $ordenActual, $dirActual, $qActual, $pageActual, $perPageActual)) ?>">Autor</a>
             </th>
             <th>
-              <a href="index.php?controller=entrada&action=listar&orden=fecha&dir=<?= nextDir('fecha',$ordenActual,$dirActual) ?>&q=<?= urlencode($qActual) ?>">
-                Fecha
-              </a>
+              <a href="<?= h(linkOrden('fecha', $ordenActual, $dirActual, $qActual, $pageActual, $perPageActual)) ?>">Fecha</a>
             </th>
             <th>Imagen</th>
             <th style="width: 290px;">Acciones</th>
           </tr>
         </thead>
+
         <tbody>
         <?php if (empty($entradas)): ?>
           <tr><td colspan="6" class="text-center text-muted">No hay entradas.</td></tr>
@@ -148,6 +192,50 @@ function h(string $s): string {
         </tbody>
       </table>
     </div>
+
+    <!-- PAGINACIÓN + IR A PÁGINA -->
+    <nav class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 mt-3">
+      <ul class="pagination mb-0">
+        <li class="page-item <?= ($pageActual <= 1) ? 'disabled' : '' ?>">
+          <a class="page-link" href="index.php?<?= $baseParams ?>&page=1">«</a>
+        </li>
+        <li class="page-item <?= ($pageActual <= 1) ? 'disabled' : '' ?>">
+          <a class="page-link" href="index.php?<?= $baseParams ?>&page=<?= (int)($pageActual - 1) ?>">‹</a>
+        </li>
+
+        <?php
+          $start = max(1, $pageActual - 2);
+          $end   = min($totalPaginas, $pageActual + 2);
+        ?>
+        <?php for ($i = $start; $i <= $end; $i++): ?>
+          <li class="page-item <?= ($i == $pageActual) ? 'active' : '' ?>">
+            <a class="page-link" href="index.php?<?= $baseParams ?>&page=<?= $i ?>"><?= $i ?></a>
+          </li>
+        <?php endfor; ?>
+
+        <li class="page-item <?= ($pageActual >= $totalPaginas) ? 'disabled' : '' ?>">
+          <a class="page-link" href="index.php?<?= $baseParams ?>&page=<?= (int)($pageActual + 1) ?>">›</a>
+        </li>
+        <li class="page-item <?= ($pageActual >= $totalPaginas) ? 'disabled' : '' ?>">
+          <a class="page-link" href="index.php?<?= $baseParams ?>&page=<?= (int)$totalPaginas ?>">»</a>
+        </li>
+      </ul>
+
+      <form method="get" action="index.php" class="d-flex align-items-center gap-2">
+        <input type="hidden" name="controller" value="entrada">
+        <input type="hidden" name="action" value="listar">
+        <input type="hidden" name="orden" value="<?= h($ordenActual) ?>">
+        <input type="hidden" name="dir" value="<?= h($dirActual) ?>">
+        <input type="hidden" name="q" value="<?= h($qActual) ?>">
+        <input type="hidden" name="perPage" value="<?= (int)$perPageActual ?>">
+
+        <label class="small text-muted">Ir a pág:</label>
+        <input type="number" name="page" min="1" max="<?= (int)$totalPaginas ?>"
+               class="form-control form-control-sm" style="width:90px"
+               value="<?= (int)$pageActual ?>">
+        <button class="btn btn-sm btn-outline-primary" type="submit">Ir</button>
+      </form>
+    </nav>
   </div>
 
   <!-- MODAL ÚNICO REUTILIZABLE -->
@@ -169,7 +257,7 @@ function h(string $s): string {
     </div>
   </div>
 
-  <!-- Bootstrap JS (necesario para modales) -->
+  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
@@ -205,7 +293,6 @@ function h(string $s): string {
         });
       });
 
-      // Pequeña función para evitar que un título raro rompa el HTML del modal
       function escapeHtml(str) {
         return (str || '')
           .replaceAll('&', '&amp;')

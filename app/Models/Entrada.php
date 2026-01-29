@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use PDO;
@@ -181,5 +182,76 @@ class Entrada
             $this->lastError = $e->getMessage();
             return false;
         }
+    }
+
+    public function contar(string $q = ''): int
+    {
+        if ($q === '') {
+            $sql = "SELECT COUNT(*) AS total FROM entradas";
+            return (int)$this->pdo->query($sql)->fetch()['total'];
+        }
+
+        $sql = "SELECT COUNT(*) AS total
+            FROM entradas e
+            INNER JOIN categorias c ON c.id = e.categoria_id
+            INNER JOIN usuarios u ON u.id = e.usuario_id
+            WHERE e.titulo LIKE :q
+               OR e.descripcion LIKE :q
+               OR c.nombre LIKE :q
+               OR u.nick LIKE :q";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':q' => '%' . $q . '%']);
+        return (int)$stmt->fetch()['total'];
+    }
+
+    public function listarPaginado(int $offset, int $limit, string $orden = 'fecha', string $dir = 'desc', string $q = ''): array
+    {
+        $ordenesPermitidos = [
+            'fecha' => 'e.fecha',
+            'titulo' => 'e.titulo',
+            'categoria' => 'c.nombre',
+            'autor' => 'u.nick'
+        ];
+
+        $dir = strtolower($dir);
+        if ($dir !== 'asc' && $dir !== 'desc') {
+            $dir = 'desc';
+        }
+
+        $col = $ordenesPermitidos[$orden] ?? 'e.fecha';
+
+        if ($q === '') {
+            $sql = "SELECT e.*, c.nombre AS categoria_nombre, u.nick AS autor_nick
+                FROM entradas e
+                INNER JOIN categorias c ON c.id = e.categoria_id
+                INNER JOIN usuarios u ON u.id = e.usuario_id
+                ORDER BY $col $dir
+                LIMIT :lim OFFSET :off";
+
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':lim', $limit, \PDO::PARAM_INT);
+            $stmt->bindValue(':off', $offset, \PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll();
+        }
+
+        $sql = "SELECT e.*, c.nombre AS categoria_nombre, u.nick AS autor_nick
+            FROM entradas e
+            INNER JOIN categorias c ON c.id = e.categoria_id
+            INNER JOIN usuarios u ON u.id = e.usuario_id
+            WHERE e.titulo LIKE :q
+               OR e.descripcion LIKE :q
+               OR c.nombre LIKE :q
+               OR u.nick LIKE :q
+            ORDER BY $col $dir
+            LIMIT :lim OFFSET :off";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':q', '%' . $q . '%', \PDO::PARAM_STR);
+        $stmt->bindValue(':lim', $limit, \PDO::PARAM_INT);
+        $stmt->bindValue(':off', $offset, \PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
     }
 }
