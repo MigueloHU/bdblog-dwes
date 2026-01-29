@@ -6,6 +6,8 @@ use PDO;
 use App\Config\Auth;
 use App\Models\Entrada;
 use App\Models\Categoria;
+use App\Models\Log;
+
 
 class EntradaController
 {
@@ -140,6 +142,8 @@ class EntradaController
             die("Error al insertar en BD: " . $msg);
         }
 
+        (new Log($this->pdo))->insertar($user['nick'], 'CREAR_ENTRADA');
+
         header('Location: index.php?controller=entrada&action=listar');
         exit;
     }
@@ -238,6 +242,9 @@ class EntradaController
             die("Error al actualizar en BD: " . $msg);
         }
 
+        (new Log($this->pdo))->insertar($user['nick'], 'EDITAR_ENTRADA');
+
+
         header('Location: index.php?controller=entrada&action=listar');
         exit;
     }
@@ -272,6 +279,9 @@ class EntradaController
             $msg = method_exists($entradaModel, 'getLastError') ? $entradaModel->getLastError() : 'Error desconocido';
             die("Error al eliminar en BD: " . $msg);
         }
+
+        (new Log($this->pdo))->insertar($user['nick'], 'ELIMINAR_ENTRADA');
+
 
         header('Location: index.php?controller=entrada&action=listar');
         exit;
