@@ -63,6 +63,10 @@ function linkOrden(string $campo, string $ordenActual, string $dirActual, string
             <div>
                 <a class="btn btn-outline-secondary" href="index.php?controller=auth&action=logout">Salir</a>
                 <a class="btn btn-outline-primary me-2" href="index.php?controller=usuario&action=listar">Usuarios</a>
+                <?php if (\App\Config\Auth::isAdmin()): ?>
+                    <a class="btn btn-outline-dark me-2" href="index.php?controller=log&action=listar">Logs</a>
+                <?php endif; ?>
+
             </div>
         </div>
 
