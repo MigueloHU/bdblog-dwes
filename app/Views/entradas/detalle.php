@@ -22,8 +22,10 @@
             <article class="card shadow-sm">
                 <?php if (!empty($entrada['imagen'])): ?>
                     <img src="uploads/<?= htmlspecialchars($entrada['imagen']) ?>"
-                        class="card-img-top"
-                        alt="Imagen de la entrada">
+                        class="card-img-top img-fluid"
+                        alt="Imagen de la entrada"
+                        style="max-height: 420px; object-fit: contain; background:#000;">
+
                 <?php endif; ?>
 
                 <div class="card-body">
